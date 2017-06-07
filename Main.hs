@@ -49,24 +49,18 @@ row = do
   _ <- P.char ')'
   return $ Row id namespace title
 
-nonEscape :: Parser Char
-nonEscape = P.satisfy (\x -> x /= '\'' && x /= '\\')
-
-escape :: Parser Char
+escape :: Parser BS.ByteString
 escape = do
   char '\\'
-  char '\\' <|> char '"' <|> char '\''
-
-character :: Parser BS.ByteString
-character = fmap BS.singleton (escape <|> nonEscape)
+  BS.singleton <$> P.satisfy (\c -> c == '\\' || c == '"' || c == '\'')
 
 {- https://stackoverflow.com/questions/24106314/parser-for-quoted-string-using-parsec -}
 quotedString :: Parser BS.ByteString
 quotedString = do
   char '\''
-  chars <- many' character
+  chars <- BS.concat <$> many' (P.takeWhile1 (\w8 -> w8 /= '\\' && w8 /= '\'') <|> escape)
   char '\''
-  return $ BS.concat chars
+  return $ chars
 
 isRight :: Either a b -> b
 isRight (Right x) = x
@@ -75,7 +69,7 @@ isRight _ = undefined
 line :: Parser [Row]
 line = do
   P.string "INSERT INTO `page` VALUES "
-  xs <- row `P.sepBy` (P.char ',')
+  xs <- row `P.sepBy'` (P.char ',')
   P.string ";"
   return $ xs
 
