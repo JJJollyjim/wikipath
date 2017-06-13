@@ -160,11 +160,9 @@ void search(struct state *state, uint32_t start, const uint32_t end) {
     return;
   }
 
-  int i = 0;
 
   uint32_t current = 0;
   while (!queue_empty(&q)) {
-    i++;
     current = queue_dequeue(&q);
 
     if (current == end) {
@@ -204,7 +202,6 @@ void search(struct state *state, uint32_t start, const uint32_t end) {
   }
 
 
-  printf("%d\n", i);
   queue_free(&q);
   bitvec_free(&visited);
   free(parents);
